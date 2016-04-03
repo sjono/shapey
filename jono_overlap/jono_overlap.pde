@@ -1,34 +1,64 @@
 Robot bot1;
 Robot bot2;
-
+Robot bot3;
+float boundw = 720;
+float boundh = 480;
+int timer;
 void setup() {
   size(720, 480); // make sure this matches the global variables above
   bot1 = new Robot("rect");
   bot1.key1 = 'a';
-  bot1.key2 = 's';
   bot2 = new Robot("circ");
   bot2.key1 = 'o';
-  bot2.key2 = 'p';
+  bot3 = new Robot(500, 260, 100, "circ");
+  bot3.key1 = 't';
   smooth();
   textSize(24);
   textAlign(CENTER);
+  timer = 300;
   println("setup completed");
 }
-
 void draw() {
   background(0);
   // Update and display first robot
+  if (timer > 0){
   bot1.speed(bot2, 1);
+  bot1.speed(bot3, 1);
   bot1.update();
   bot1.display();
   // Update and display second robot
   bot2.speed(bot1, -1);
+  bot2.speed(bot3, -1);
   bot2.update();
   bot2.display();
+  bot3.speed(bot1, -1);
+  bot3.speed(bot2, 1);
+  bot3.update();
+  bot3.display();
+  timer --;
+  }
+  else{
+    bot1.display();
+    bot2.display();
+    bot3.display();
+    fill(255,255,255,98);
+    rect(boundw/2-150,boundh/2-150,300,300,5);
+    float areaTaken = bot1.getAreaSize() + bot2.getAreaSize() + bot3.getAreaSize();
+    int percentage = int(100 * areaTaken/(boundw*boundh));
+    fill (255,255,255);
+    text("You have taken",boundw/2,boundh/2-40);
+    text(percentage+"%",boundw/2,boundh/2);
+    text("of the space",boundw/2,boundh/2+40 );
+    if (int(key) == 32)
+        setup();
+  }
+  fill(255,255,255);
+  text("Time left:",80, 30);
+  text(timer, 180,30);
   
 }
-
 class Robot {
+  
   float sizeMin = 50;
   float xpos; float ypos;
   float initialSize;
@@ -40,9 +70,9 @@ class Robot {
   float boundw = 720;
   float boundh = 480;
   char key1; // key to press to grow the shape
-  char key2; // key to press to shrink the shape
   int r = 255; int g = 255; int b = 255;
   int[] border = {10,10};
+  
   //float yoffset = 0.0;
   // Set initial values in constructor
   Robot(String desiredShape){
@@ -53,6 +83,17 @@ class Robot {
     r = (int)random(0, 100);
     g = (int)random(0,100);
     b = (int)random(100,220);
+    shape = desiredShape;
+  }
+  
+  Robot(float xnew, float ynew, float sizenew, String desiredShape){
+    xpos = xnew;
+    ypos = ynew;
+    initialSize = sizenew;
+    size = initialSize;
+    r = (int)random(100, 220);
+    g = (int)random(0,50);
+    b = (int)random(50,110);
     shape = desiredShape;
   }
   
@@ -92,6 +133,12 @@ class Robot {
       if ((boundaryCheck()[0] == 0) && (boundaryCheck()[1] == 0))
         return true;
       return false;
+  }
+  
+  float getAreaSize(){
+     if (shape == "circle")
+       return 3.14*size*size;
+     else return size*size;
   }
   
   //Check if a shape can grow and stay within the boundaries
@@ -149,10 +196,6 @@ class Robot {
       if (key == key1)
         if (this.canGrow() && adjustCenter())
           size += 3;
-      else if ((key == key2) && (size > sizeMin))
-        size -= 3;
-      else if (int(key) == 32)
-        setup();
     }
     if (size > initialSize ){
       size += -0.5;
@@ -177,7 +220,6 @@ class Robot {
         ellipse(xpos+size/2, ypos+size/2, size, size);
     else rect(xpos, ypos, size, size); 
     fill(0, 0, 0);
-    text("+: "+key1, xpos+size/2, ypos+size/2-16);
-    text("-: "+key2, xpos+size/2, ypos+size/2+16);
+    text("+: "+key1, xpos+size/2, ypos+size/2);
   }
 }
