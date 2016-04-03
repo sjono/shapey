@@ -18,23 +18,24 @@ void setup() {
 void draw() {
   background(0);
   // Update and display first robot
-  if (bot1.moveShape(bot2, 1))
-    bot1.update();
+  bot1.speed(bot2, 1);
+  bot1.update();
   bot1.display();
   // Update and display second robot
-  if(bot2.moveShape(bot1, -1))
-    bot2.update();
+  bot2.speed(bot1, -1);
+  bot2.update();
   bot2.display();
   
 }
 
 class Robot {
   float sizeMin = 50;
-  float xpos;
-  float ypos;
+  float xpos; float ypos;
   float initialSize;
   float size;
   String shape;
+  float xspeed;
+  float yspeed;
   float angle;
   float boundw = 720;
   float boundh = 480;
@@ -72,35 +73,35 @@ class Robot {
     if(pts[1][0] > boundw) 
       check[0] = -1;
     if (pts[0][1] < this.border[1])
-      check[0] = 1;
+      check[1] = 1;
     if (pts[1][1] > boundh) // check that shape is inside bottom R corner
         check[1] = -1;
     return check;
   }
   
-  //Takes new bot and direction (-1 or 1) to determine which way to move
-  // Returns a value for update; false means overlaps and boundary crash >> don't grow anymore!
-  boolean moveShape(Robot bot2, int dir){
-    boolean check = true;
-    int[] collision = this.checkOverlap(bot2);
-    //println("checkOverlap is returning ", collision[0], ", ", collision[1]);
-    if (this.boundaryCheck()[0] == 0){ //check boundary (X)
-      this.xpos += dir*3*collision[0];
-    } 
-    else if (collision[0] != 0) // IF outside boundaries (X) AND there IS overlap (X)
-      check = false;
-    else this.xpos += this.boundaryCheck()[0];
-    if(this.boundaryCheck()[1] == 0){
-       this.ypos += dir*3*collision[1];
+  void speed(Robot bot2, int dir){
+    int collision[] = this.checkOverlap(bot2);
+    xspeed += 5*dir*collision[0]; // have xdirection respond to other bot (overlap)
+    yspeed += 5*dir*collision[1]; // have ydirection respond to other bot (overlap)
+  }
+  
+  // Move xpos and ypos as necessary so that shape grows in a corner or on an edge
+  boolean adjustCenter(){
+      xpos += 5*boundaryCheck()[0];
+      ypos += 5*boundaryCheck()[1];
+      if ((boundaryCheck()[0] == 0) && (boundaryCheck()[1] == 0))
+        return true;
+      return false;
+  }
+  
+  //Check if a shape can grow and stay within the boundaries
+  boolean canGrow(){
+    if ((this.boundaryCheck()[0] != 0) && (this.boundaryCheck()[1] !=0)){
+      //println("shape hit a boundary!");
+      return false;
     }
-    else if (collision[1] != 0) // IF outside boundaries (Y) AND there IS overlap (Y)
-      check = false;
-    else this.ypos += this.boundaryCheck()[1];
-    //if(this.boundaryCheck()[0] && this.boundaryCheck()[1]) // If hitting X and Y boundaries
-    //  check = false;
-    return check;
-  } 
-   
+    return true;
+  }
    
    //Compares this (bot1) to bot2 to check overlap
    //If overlap, this returns x, y values of which way to move bot1 away from bot2
@@ -140,14 +141,15 @@ class Robot {
     
   // Update the fields
   void update() {
-    if (mousePressed){
-    size += 3;
+    if (mousePressed & this.canGrow()){
+      size += 3;
     }
     if (keyPressed){
       //println("keyPressed is " + int(key));
       if (key == key1)
-        size += 3;
-      else if ((key == key2) && size > sizeMin)
+        if (this.canGrow() && adjustCenter())
+          size += 3;
+      else if ((key == key2) && (size > sizeMin))
         size -= 3;
       else if (int(key) == 32)
         setup();
@@ -155,7 +157,17 @@ class Robot {
     if (size > initialSize ){
       size += -0.5;
     }
+    xpos = xpos + xspeed;
+    ypos = ypos + yspeed;
+    if (xspeed != 0){ //slowly decrease the xspeed
+      xspeed = (xspeed/abs(xspeed)) * max(0,(abs(xspeed)-1));
+    }
+    if (yspeed != 0){ // slowly decrese yspeed
+      yspeed = (yspeed/abs(yspeed)) * max(0,(abs(yspeed)-1));
+    }
     
+    if ((boundaryCheck()[0] != 0) || (boundaryCheck()[1] != 0))
+      adjustCenter();
  
   }
   // Draw the robot to the screen
