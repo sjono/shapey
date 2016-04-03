@@ -3,10 +3,10 @@ Robot bot2;
 
 void setup() {
   size(720, 480); // make sure this matches the global variables above
-  bot1 = new Robot();
+  bot1 = new Robot("rect");
   bot1.key1 = 'a';
   bot1.key2 = 's';
-  bot2 = new Robot();
+  bot2 = new Robot("circ");
   bot2.key1 = 'o';
   bot2.key2 = 'p';
   smooth();
@@ -34,6 +34,7 @@ class Robot {
   float ypos;
   float initialSize;
   float size;
+  String shape;
   float angle;
   float boundw = 720;
   float boundh = 480;
@@ -43,7 +44,7 @@ class Robot {
   int[] border = {10,10};
   //float yoffset = 0.0;
   // Set initial values in constructor
-  Robot(){
+  Robot(String desiredShape){
     xpos = random(0, 200);
     ypos = random(0,200);
     initialSize = random(50,200);
@@ -51,13 +52,7 @@ class Robot {
     r = (int)random(0, 100);
     g = (int)random(0,100);
     b = (int)random(100,220);
-  }
-  
-  Robot(float tempX, float tempY, float tempSize) {
-    xpos = tempX;
-    initialSize = tempSize;
-    ypos = tempY;
-    size = tempSize;
+    shape = desiredShape;
   }
   
   float[][] shapePts(){
@@ -79,7 +74,7 @@ class Robot {
     if (pts[0][1] < this.border[1])
       check[0] = 1;
     if (pts[1][1] > boundh) // check that shape is inside bottom R corner
-        check[1] = 1;
+        check[1] = -1;
     return check;
   }
   
@@ -89,7 +84,7 @@ class Robot {
     boolean check = true;
     int[] collision = this.checkOverlap(bot2);
     //println("checkOverlap is returning ", collision[0], ", ", collision[1]);
-    if (this.boundaryCheck()[0] == 0){
+    if (this.boundaryCheck()[0] == 0){ //check boundary (X)
       this.xpos += dir*3*collision[0];
     } 
     else if (collision[0] != 0) // IF outside boundaries (X) AND there IS overlap (X)
@@ -105,14 +100,7 @@ class Robot {
     //  check = false;
     return check;
   } 
-    
-   Robot changeSize(int scale){
-     // takes variable scale (from -100 to 100) to determine the size change
-     Robot sizedRobot;
-     float newSize = this.size*scale/25;
-     sizedRobot = new Robot(this.xpos, this.ypos, newSize);
-     return sizedRobot;
-   }
+   
    
    //Compares this (bot1) to bot2 to check overlap
    //If overlap, this returns x, y values of which way to move bot1 away from bot2
@@ -173,7 +161,9 @@ class Robot {
   // Draw the robot to the screen
   void display() {
     fill(r, g, b);
-    rect(xpos, ypos, size, size);
+    if (shape == "circ")
+        ellipse(xpos+size/2, ypos+size/2, size, size);
+    else rect(xpos, ypos, size, size); 
     fill(0, 0, 0);
     text("+: "+key1, xpos+size/2, ypos+size/2-16);
     text("-: "+key2, xpos+size/2, ypos+size/2+16);
