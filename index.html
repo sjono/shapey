@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="js/processing.js"></script>
+	<style>
+    header {
+      text-align: center;
+      background: url("https://farm4.staticflickr.com/3262/3198426148_04cef55b8a_z.jpg");
+      background-size: cover;
+      color: white;
+    }
+    header a {
+      color: white;
+    }
+    h1 {
+        font-size: 70px;
+		color:black;
+        background-color: rgba(220, 228, 181, .5)
+    }
+    header h2 {
+          background-color: rgba(220, 228, 181, .5)
+    }
+    img {
+      margin: 40px 0px 0px 0px;
+      border: 7px solid white;
+      border-radius: 20px;
+    }
+    ul {
+      padding: 10px;
+      background: black;
+    }
+    li {
+      display: inline;
+      padding: 0px 10px 0px 10px;
+    }
+    article{
+      max-width: 500px;
+      padding: 20px;
+      margin: 0 auto;
+    }
+    @media (max-width: 500px) {
+      h1 {
+        font-size: 36px;
+      }
+      li {
+        display: block;
+        padding: 5px;
+      }
+    }
+    
+      img {
+          max-width: 100%;
+      }
+  </style>
+	</head>
+    <img src="https://farm8.staticflickr.com/7081/7285525076_3055a2b3f0_z.jpg" height=150 width = 150>
+      <h1>Play Shapey</h1>
+      <!--  <h2>Search recipes while you cook</h2> -->
+    <ul>
+      <li><a href="#whatisit">What is it?</a></li>
+      <li><a href="#demo">Demo</a></li>
+      <li><a href="#design">Design</a></li>
+        <li><a href="#about">About</a></li>
+    </ul>
+  </header>
+    
+<article>
+  <h2 id="whatisit">What is it</h2>
+  <!--<img src="http://www.jonosanders.com/explained.png"> -->
+    <p>How can you collaborate with someone else in a fun interactive way?</p>
+  
+</article>
+  
+<article>
+  <h2 id="demo">Demo</h2>
+	
+	
+<script type="application/processing">
+Robot bot1;
+Robot bot2;
+Robot bot3;
+float boundw = 720;
+float boundh = 480;
+int timer;
+void setup() {
+  size(720, 480); // make sure this matches the global variables above
+  bot1 = new Robot("rect");
+  bot1.key1 = 'a';
+  bot2 = new Robot("circ");
+  bot2.key1 = 'o';
+  bot3 = new Robot(500, 260, 100, "circ");
+  bot3.key1 = 't';
+  smooth();
+  textSize(24);
+  textAlign(CENTER);
+  timer = 600;
+  println("setup completed");
+}
+void draw() {
+  background(0);
+  // Update and display first robot
+  if (timer > 0){
+  bot1.speed(bot2, 1);
+  bot1.speed(bot3, 1);
+  bot1.update();
+  bot1.display();
+  // Update and display second robot
+  bot2.speed(bot1, -1);
+  bot2.speed(bot3, -1);
+  bot2.update();
+  bot2.display();
+  bot3.speed(bot1, -1);
+  bot3.speed(bot2, 1);
+  bot3.update();
+  bot3.display();
+  timer --;
+  }
+  else{
+    bot1.display();
+    bot2.display();
+    bot3.display();
+    fill(255,255,255,98);
+    rect(boundw/2-150,boundh/2-150,300,300,5);
+    float areaTaken = bot1.getAreaSize() + bot2.getAreaSize() + bot3.getAreaSize();
+    int percentage = int(100 * areaTaken/(boundw*boundh));
+    fill (255,255,255);
+    text("You have taken",boundw/2,boundh/2-40);
+    text(percentage+"%",boundw/2,boundh/2);
+    text("of the space",boundw/2,boundh/2+40 );
+	text("Press SPACE to play again",boundw/2,boundh/2+80 );
+    if (int(key) == 32)
+        setup();
+  }
+  fill(255,255,255);
+  text("Time left:",80, 30);
+  text(timer, 180,30);
+  
+}
+class Robot {
+  
+  float sizeMin = 50;
+  float xpos; float ypos;
+  float initialSize;
+  float size;
+  String shape;
+  float xspeed;
+  float yspeed;
+  float angle;
+  float boundw = 720;
+  float boundh = 480;
+  char key1; // key to press to grow the shape
+  int r = 255; int g = 255; int b = 255;
+  int[] border = {10,10};
+  
+  //float yoffset = 0.0;
+  // Set initial values in constructor
+  Robot(String desiredShape){
+    xpos = random(0, 200);
+    ypos = random(0,200);
+    initialSize = random(50,200);
+    size = initialSize;
+    r = (int)random(0, 100);
+    g = (int)random(0,100);
+    b = (int)random(100,220);
+    shape = desiredShape;
+  }
+  
+  Robot(float xnew, float ynew, float sizenew, String desiredShape){
+    xpos = xnew;
+    ypos = ynew;
+    initialSize = sizenew;
+    size = initialSize;
+    r = (int)random(100, 220);
+    g = (int)random(0,50);
+    b = (int)random(50,110);
+    shape = desiredShape;
+  }
+  
+  float[][] shapePts(){
+    float[] pt1 = {this.xpos, this.ypos}; //top left corner
+    float[] pt3 = {this.xpos+this.size, this.ypos+this.size}; //bottom right corner
+    float[][] shapePts = {pt1, pt3};
+    return shapePts;
+  }
+  
+  // Checks if this bot is inside the boundaries of the window
+  // Returns 0,0 if the shape is inside boundaries, direction to move if it's not
+  int[] boundaryCheck(){
+    float[][] pts = this.shapePts();
+    int[] check = {0,0}; //returns X and Y check
+    if (pts[0][0] < this.border[0]) // Check that shape is inside top left corner
+      check[0] = 1;
+    if(pts[1][0] > boundw) 
+      check[0] = -1;
+    if (pts[0][1] < this.border[1])
+      check[1] = 1;
+    if (pts[1][1] > boundh) // check that shape is inside bottom R corner
+        check[1] = -1;
+    return check;
+  }
+  
+  void speed(Robot bot2, int dir){
+    int collision[] = this.checkOverlap(bot2);
+    xspeed += 5*dir*collision[0]; // have xdirection respond to other bot (overlap)
+    yspeed += 5*dir*collision[1]; // have ydirection respond to other bot (overlap)
+  }
+  
+  // Move xpos and ypos as necessary so that shape grows in a corner or on an edge
+  boolean adjustCenter(){
+      xpos += 5*boundaryCheck()[0];
+      ypos += 5*boundaryCheck()[1];
+      if ((boundaryCheck()[0] == 0) && (boundaryCheck()[1] == 0))
+        return true;
+      return false;
+  }
+  
+  float getAreaSize(){
+     if (shape == "circle")
+       return 3.14*size*size;
+     else return size*size;
+  }
+  
+  //Check if a shape can grow and stay within the boundaries
+  boolean canGrow(){
+    if ((this.boundaryCheck()[0] != 0) && (this.boundaryCheck()[1] !=0)){
+      //println("shape hit a boundary!");
+      return false;
+    }
+    return true;
+  }
+   
+   //Compares this (bot1) to bot2 to check overlap
+   //If overlap, this returns x, y values of which way to move bot1 away from bot2
+   int[] checkOverlap(Robot shape2){
+     float[][] newPts = this.shapePts();
+     //println("this shape points are {", newPts[0][0], ", ", newPts[0][1], "}, {", 
+     //          newPts[1][0], ", ", newPts[1][1], "}");
+     float[][] comparePts = shape2.shapePts();
+     //println("shape2 points are {", comparePts[0][0], ", ", comparePts[0][1], "}, {", 
+     //          comparePts[1][0], ", ", comparePts[1][1], "}");
+     float ax0  = newPts[0][0]; float ay0 = newPts[0][1];
+     float ax1 = newPts[1][0]; float ay1 = newPts[1][1]; 
+     float bx0 = comparePts[0][0]; float by0 = comparePts[0][1]; 
+     float bx1 = comparePts[1][0]; float by1 = comparePts[1][1];
+     float topA = min(ay0, ay1);
+     float botA = max(ay0, ay1);
+     float leftA = min(ax0, ax1);
+     float rightA = max(ax0, ax1);
+     float topB = min(by0, by1);
+     float botB = max(by0, by1);
+     float leftB = min(bx0, bx1);
+     float rightB = max(bx0, bx1);
+     int[] move = {0,0};
+     if (!(botA <= topB  || botB <= topA || rightA <= leftB || rightB <= leftA)){ 
+       if (botA > topB){
+        move[1] = 1; //this shape needs to move up (pos y)
+        } if (botB > topA){
+        move[1] =  -1; //this shape needs to move down (neg y)
+        } if (rightA > leftB){
+        move[0] =  -1; //this shape needs to move left (negative x)
+        } if (rightB < leftA){
+        move[0] = 1; // this shape needs to move right (positive x)
+        }
+     }
+     return move;
+   }
+    
+  // Update the fields
+  void update() {
+    if (mousePressed & this.canGrow()){
+      size += 3;
+    }
+    if (keyPressed){
+      //println("keyPressed is " + int(key));
+      if (key == key1)
+        if (this.canGrow() && adjustCenter())
+          size += 3;
+    }
+    if (size > initialSize ){
+      size += -0.5;
+    }
+    xpos = xpos + xspeed;
+    ypos = ypos + yspeed;
+    if (xspeed != 0){ //slowly decrease the xspeed
+      xspeed = (xspeed/abs(xspeed)) * max(0,(abs(xspeed)-1));
+    }
+    if (yspeed != 0){ // slowly decrese yspeed
+      yspeed = (yspeed/abs(yspeed)) * max(0,(abs(yspeed)-1));
+    }
+    
+    if ((boundaryCheck()[0] != 0) || (boundaryCheck()[1] != 0))
+      adjustCenter();
+ 
+  }
+  // Draw the robot to the screen
+  void display() {
+    fill(r, g, b);
+    if (shape == "circ")
+        ellipse(xpos+size/2, ypos+size/2, size, size);
+    else rect(xpos, ypos, size, size); 
+    fill(0, 0, 0);
+    text("+:", xpos+size/2-12, ypos+size/2);
+	text((String)key1, xpos+size/2+12, ypos+size/2);
+  }
+}
+</script><canvas width="200" height="200"></canvas></p>
+
+ <article>
+  <h2 id="design">Design</h2>
+  <img src="https://farm2.staticflickr.com/1449/26142907421_60a5bbea2b.jpg">
+      <p>The program was written in processing and imported into HTML using javascript.</p>
+  
+    </article>
+
+    <article>
+    <h2 id="about">ABOUT</h2>
+    <img src="http://ipd.me.upenn.edu/pipd-assets/images/imgs-general/ipd-logo.png">
+        <p>Jono Sanders (<a href="https://github.com/sjono">@sjono</a>), Aobo Zhou (<a href="http://aobos.net/">@aobos.net</a>) designed, developed, and coded Shapey during Penn Play in the Spring 2016 at the University of Pennsylvania.</p>
+    <p> Also check out <a href="http://pennplay.org/" color="blue">Penn Play 2016</a>
+        and <a href="https://github.com/sjono/shapey">Play Shapey on GitHub</a></p>
+    </article>
+
+
+</body>
+</html>
